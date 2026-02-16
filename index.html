@@ -1,10 +1,946 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Pháo Hoa Hoành Tráng</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            cursor: crosshair;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            color: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 12px;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            line-height: 1.6;
+            max-width: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .info {
+                font-size: 16px;
+                padding: 15px;
+                border-radius: 10px;
+                max-width: none;
+                right: auto;
+            }
+        }
+
+        .info strong {
+            color: #FFD700;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+
+        .flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .click-effect {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: clickPulse 0.6s ease-out;
+        }
+
+        @keyframes clickPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.3);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+                box-shadow: 0 0 30px 20px rgba(255, 255, 255, 0);
+            }
+        }
+
+        .countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        @media (min-width: 768px) {
+            .countdown {
+                font-size: 120px;
+            }
+        }
+
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow:
+                    0 0 10px rgba(255, 215, 0, 0.8),
+                    0 0 20px rgba(255, 215, 0, 0.6),
+                    0 0 30px rgba(255, 215, 0, 0.4),
+                    3px 3px 6px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            font-family: 'Arial Black', sans-serif;
+            white-space: nowrap;
+            letter-spacing: 4px;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .message {
+                font-size: 80px;
+                letter-spacing: 8px;
+            }
+        }
+
+        @keyframes countdownPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .hide-mobile {
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .hide-mobile {
+                display: inline;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World!</h1>
+<div class="info">
+    ✨ <strong>Chạm/Nhấp</strong> bất kỳ đâu để bắn pháo hoa!<br>
+    🎆 Pháo tự động bay từ 2 góc dưới<br class="hide-mobile">
+    🔊 <strong>Chạm lần đầu để BẬT ÂM THANH</strong><br>
+    💥 <strong>Pháo chùm đa sắc hoành tráng sau 10 giây!</strong>
+</div>
+<div class="flash" id="flash"></div>
+<div class="countdown" id="countdown"></div>
+<div class="message" id="message">HAPPY NEW YEAR</div>
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const flash = document.getElementById('flash');
+    const countdown = document.getElementById('countdown');
+    const message = document.getElementById('message');
+
+    // Phát hiện mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || window.innerWidth < 768;
+
+    // Điều chỉnh performance dựa trên thiết bị
+    const PERFORMANCE_SCALE = isMobile ? 0.6 : 1;
+    const AUTO_FIREWORK_INTERVAL = isMobile ? 3500 : 2500;
+    const PARTICLE_TRAIL_LENGTH = isMobile ? 3 : 5;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Tạo sao trên bầu trời (ít hơn trên mobile)
+    function createStars() {
+        const starCount = isMobile ? 100 : 200;
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * window.innerWidth + 'px';
+            star.style.top = Math.random() * window.innerHeight * 0.7 + 'px';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            star.style.animationDuration = (2 + Math.random() * 3) + 's';
+            if (Math.random() > 0.5) {
+                star.style.width = star.style.height = '1px';
+            }
+            document.body.appendChild(star);
+        }
+    }
+    createStars();
+
+    const fireworks = [];
+    const particles = [];
+    const fireworkTypes = [
+        'mega-burst', 'chrysanthemum', 'peony', 'willow-king', 'crossette',
+        'electric-blue', 'fire-ice', 'golden-crown', 'pastel-dream',
+        'neon-flash', 'gradient-burst', 'tri-color', 'color-changing'
+    ];
+
+    // Âm thanh
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let audioInitialized = false;
+
+    function playWhooshSound() {
+        if (!audioInitialized) return;
+        try {
+            const mainOsc = audioContext.createOscillator();
+            const mainGain = audioContext.createGain();
+            const mainFilter = audioContext.createBiquadFilter();
+
+            mainOsc.connect(mainFilter);
+            mainFilter.connect(mainGain);
+            mainGain.connect(audioContext.destination);
+
+            mainFilter.type = 'bandpass';
+            mainFilter.frequency.setValueAtTime(200, audioContext.currentTime);
+            mainFilter.frequency.exponentialRampToValueAtTime(500, audioContext.currentTime + 1);
+            mainFilter.Q.value = 3;
+
+            mainOsc.frequency.setValueAtTime(100, audioContext.currentTime);
+            mainOsc.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 1);
+            mainOsc.type = 'sawtooth';
+
+            mainGain.gain.setValueAtTime(0.01, audioContext.currentTime);
+            mainGain.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime + 0.15);
+            mainGain.gain.setValueAtTime(0.3, audioContext.currentTime + 0.15);
+            mainGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+
+            mainOsc.start(audioContext.currentTime);
+            mainOsc.stop(audioContext.currentTime + 1);
+
+            const whistleOsc = audioContext.createOscillator();
+            const whistleGain = audioContext.createGain();
+            const whistleFilter = audioContext.createBiquadFilter();
+
+            whistleOsc.connect(whistleFilter);
+            whistleFilter.connect(whistleGain);
+            whistleGain.connect(audioContext.destination);
+
+            whistleFilter.type = 'bandpass';
+            whistleFilter.frequency.value = 1500;
+            whistleFilter.Q.value = 10;
+
+            whistleOsc.frequency.setValueAtTime(1400, audioContext.currentTime);
+            whistleOsc.frequency.exponentialRampToValueAtTime(1800, audioContext.currentTime + 1);
+            whistleOsc.type = 'sine';
+
+            whistleGain.gain.setValueAtTime(0.01, audioContext.currentTime);
+            whistleGain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.2);
+            whistleGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+
+            whistleOsc.start(audioContext.currentTime);
+            whistleOsc.stop(audioContext.currentTime + 1);
+        } catch(e) {}
+    }
+
+    function playExplosionSound(isGrand = false) {
+        if (!audioInitialized) return;
+        try {
+            const volume = isGrand ? 0.8 : 0.6;
+
+            const bass = audioContext.createOscillator();
+            const bassGain = audioContext.createGain();
+
+            bass.connect(bassGain);
+            bassGain.connect(audioContext.destination);
+
+            bass.frequency.setValueAtTime(80, audioContext.currentTime);
+            bass.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 0.3);
+            bass.type = 'sine';
+
+            bassGain.gain.setValueAtTime(volume, audioContext.currentTime);
+            bassGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            bass.start(audioContext.currentTime);
+            bass.stop(audioContext.currentTime + 0.3);
+        } catch(e) {}
+    }
+
+    // Khởi tạo âm thanh khi chạm/click lần đầu
+    function initAudio() {
+        if (!audioInitialized) {
+            audioContext.resume();
+            audioInitialized = true;
+        }
+    }
+
+    canvas.addEventListener('click', initAudio, { once: true });
+    canvas.addEventListener('touchstart', initAudio, { once: true });
+
+    class Firework {
+        constructor(x, y, targetX, targetY) {
+            this.x = x;
+            this.y = y;
+            this.targetX = targetX;
+            this.targetY = targetY;
+            this.speed = 6 + Math.random() * 2.5;
+            this.angle = Math.atan2(targetY - y, targetX - x);
+            this.vx = Math.cos(this.angle) * this.speed;
+            this.vy = Math.sin(this.angle) * this.speed;
+            this.distanceToTarget = Math.hypot(targetX - x, targetY - y);
+            this.distanceTraveled = 0;
+            this.trail = [];
+            this.hue = Math.random() * 360;
+            this.brightness = 60 + Math.random() * 20;
+            this.sparkles = [];
+            this.size = 0.8 + Math.random() * 0.4;
+            this.hasExploded = false;
+        }
+
+        update() {
+            this.trail.push({ x: this.x, y: this.y });
+            if (this.trail.length > 15) this.trail.shift();
+
+            if (Math.random() < 0.15) {
+                this.sparkles.push({
+                    x: this.x,
+                    y: this.y,
+                    vx: (Math.random() - 0.5) * 1,
+                    vy: Math.random() * 1,
+                    alpha: 1,
+                    size: Math.random() * 1 + 0.5
+                });
+            }
+
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.02;
+            this.distanceTraveled += Math.hypot(this.vx, this.vy);
+
+            for (let i = this.sparkles.length - 1; i >= 0; i--) {
+                const s = this.sparkles[i];
+                s.x += s.vx;
+                s.y += s.vy;
+                s.vy += 0.1;
+                s.alpha -= 0.05;
+                if (s.alpha <= 0) this.sparkles.splice(i, 1);
+            }
+
+            const currentDist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
+            const reachedTarget = currentDist <= 15;
+            const passedTargetY = this.y <= this.targetY + 10;
+            const traveledEnough = this.distanceTraveled >= this.distanceToTarget * 0.85;
+
+            if (reachedTarget || (passedTargetY && traveledEnough) || this.y < canvas.height * 0.1) {
+                this.hasExploded = true;
+                return true;
+            }
+
+            if (this.distanceTraveled > this.distanceToTarget * 1.2 || this.y < 30) {
+                this.hasExploded = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        draw() {
+            for (let i = 0; i < this.trail.length; i += 2) {
+                const t = this.trail[i];
+                const alpha = (i / this.trail.length);
+                const size = (i / this.trail.length) * 2;
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${alpha * 0.5})`;
+                ctx.fill();
+            }
+
+            this.sparkles.forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 240, 150, ${s.alpha})`;
+                ctx.fill();
+            });
+
+            const headLength = 8;
+            const headWidth = 3;
+            const angle = Math.atan2(this.vy, this.vx);
+
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(angle);
+
+            ctx.beginPath();
+            ctx.moveTo(headLength, 0);
+            ctx.lineTo(-headLength/2, -headWidth);
+            ctx.lineTo(-headLength/2, headWidth);
+            ctx.closePath();
+            ctx.fillStyle = `hsl(${this.hue}, 100%, 95%)`;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(headLength * 0.6, 0, this.size * 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+
+    class Particle {
+        constructor(x, y, hue, type, layer = 0) {
+            this.x = x;
+            this.y = y;
+            this.type = type;
+            this.hue = hue + (Math.random() - 0.5) * 40;
+            this.size = 1 + Math.random() * 1;
+            this.brightness = 60 + Math.random() * 30;
+            this.saturation = 100;
+
+            // Setup theo kiểu pháo hoa
+            this.setupFireworkType(type, layer);
+
+            this.vx = Math.cos(this.angle) * this.speed;
+            this.vy = Math.sin(this.angle) * this.speed;
+            this.opacity = 1;
+            this.trail = [];
+            this.twinkle = Math.random() * Math.PI * 2;
+            this.splitTime = type === 'crossette' ? 30 + Math.random() * 20 : null;
+            this.lifeTime = 0;
+        }
+
+        setupFireworkType(type, layer) {
+            switch(type) {
+                case 'mega-burst':
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = (layer === 0 ? 5 : 3) + Math.random() * 2.5;
+                    this.gravity = 0.05;
+                    this.friction = 0.985;
+                    break;
+
+                case 'chrysanthemum':
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 3.5 + Math.random() * 2;
+                    this.gravity = 0.03;
+                    this.friction = 0.995;
+                    break;
+
+                case 'peony':
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 2.5 + Math.random() * 3;
+                    this.gravity = 0.05;
+                    this.friction = 0.985;
+                    break;
+
+                case 'willow-king':
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 2 + Math.random() * 1.5;
+                    this.gravity = 0.12;
+                    this.friction = 0.97;
+                    break;
+
+                case 'crossette':
+                    const directions = 8;
+                    const i = Math.floor(Math.random() * directions);
+                    this.angle = (i * Math.PI * 2) / directions;
+                    this.speed = 4 + Math.random() * 1.5;
+                    this.gravity = 0.05;
+                    this.friction = 0.985;
+                    break;
+
+                case 'electric-blue':
+                    this.hue = 200 + Math.random() * 20;
+                    this.brightness = 85 + Math.random() * 10;
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 4 + Math.random() * 2.5;
+                    this.gravity = 0.05;
+                    this.friction = 0.985;
+                    this.strobeSpeed = 0.4;
+                    this.size = 1.5 + Math.random() * 1;
+                    break;
+
+                case 'fire-ice':
+                    const isFireOrIce = Math.random() < 0.5;
+                    if (isFireOrIce) {
+                        this.hue = Math.random() * 30;
+                        this.brightness = 80 + Math.random() * 15;
+                    } else {
+                        this.hue = 180 + Math.random() * 40;
+                        this.brightness = 75 + Math.random() * 15;
+                    }
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 3 + Math.random() * 2;
+                    this.gravity = 0.04;
+                    this.friction = 0.99;
+                    break;
+
+                case 'golden-crown':
+                    this.hue = 45 + Math.random() * 15;
+                    this.brightness = 85 + Math.random() * 10;
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 2 + Math.random() * 1.5;
+                    this.gravity = 0.03;
+                    this.friction = 0.995;
+                    this.glitter = true;
+                    this.size = 1.5 + Math.random() * 1;
+                    break;
+
+                case 'pastel-dream':
+                    const pastelColors = [0, 30, 120, 200, 270, 330];
+                    this.hue = pastelColors[Math.floor(Math.random() * pastelColors.length)];
+                    this.brightness = 75 + Math.random() * 10;
+                    this.saturation = 50;
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 2.5 + Math.random() * 1.5;
+                    this.gravity = 0.03;
+                    this.friction = 0.995;
+                    break;
+
+                case 'neon-flash':
+                    const neonColors = [0, 60, 120, 180, 270, 300];
+                    this.hue = neonColors[Math.floor(Math.random() * neonColors.length)];
+                    this.brightness = 85 + Math.random() * 15;
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 3.5 + Math.random() * 2;
+                    this.gravity = 0.05;
+                    this.friction = 0.985;
+                    this.strobeSpeed = 0.5;
+                    break;
+
+                case 'gradient-burst':
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 2 + Math.random() * 3;
+                    this.gravity = 0.04;
+                    this.friction = 0.99;
+                    this.hue = (this.speed / 5) * 360;
+                    this.colorShiftSlow = 0.5;
+                    break;
+
+                case 'tri-color':
+                    const triColors = [0, 0, 210];
+                    const triIndex = Math.floor(Math.random() * 3);
+                    this.hue = triColors[triIndex];
+                    if (triIndex === 1) this.brightness = 95;
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 3 + Math.random() * 2;
+                    this.gravity = 0.05;
+                    this.friction = 0.985;
+                    break;
+
+                case 'color-changing':
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 3 + Math.random() * 2;
+                    this.gravity = 0.04;
+                    this.friction = 0.99;
+                    this.hue = 0;
+                    this.colorShift = 5;
+                    break;
+
+                default:
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 3 + Math.random() * 2;
+                    this.gravity = 0.05;
+                    this.friction = 0.985;
+            }
+        }
+
+        update() {
+            this.lifeTime++;
+            this.trail.push({ x: this.x, y: this.y });
+            const maxTrail = this.type === 'willow-king' ? 12 : this.type === 'chrysanthemum' ? 8 : PARTICLE_TRAIL_LENGTH;
+            if (this.trail.length > maxTrail) this.trail.shift();
+
+            this.vx *= this.friction;
+            this.vy *= this.friction;
+            this.vy += this.gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            this.twinkle += 0.15;
+
+            // Xử lý opacity và màu sắc
+            if (this.type === 'electric-blue' || this.type === 'neon-flash') {
+                this.opacity = Math.abs(Math.sin(this.lifeTime * this.strobeSpeed)) * 0.7 + 0.3;
+                this.opacity -= 0.004;
+            } else if (this.type === 'color-changing') {
+                this.hue += this.colorShift;
+                this.opacity -= 0.003;
+            } else if (this.type === 'gradient-burst' && this.colorShiftSlow) {
+                this.hue += this.colorShiftSlow;
+                this.opacity -= 0.005;
+            } else {
+                const fadeSpeed = this.type === 'willow-king' ? 0.004 : this.type === 'chrysanthemum' ? 0.005 : 0.007;
+                this.opacity -= fadeSpeed;
+            }
+
+            if (this.splitTime && this.lifeTime >= this.splitTime) {
+                this.splitTime = null;
+                return 'split';
+            }
+
+            return this.opacity > 0;
+        }
+
+        draw() {
+            if (this.lifeTime % 2 === 0) {
+                for (let i = 0; i < this.trail.length; i += 2) {
+                    const t = this.trail[i];
+                    const trailAlpha = (i / this.trail.length) * this.opacity * 0.4;
+                    const size = ((i / this.trail.length) * this.size * 0.8);
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, size, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.brightness}%, ${trailAlpha})`;
+                    ctx.fill();
+                }
+            }
+
+            const twinkleSize = this.size * (1 + Math.sin(this.twinkle) * 0.2);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, twinkleSize, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.brightness}%, ${this.opacity})`;
+            ctx.fill();
+
+            // Core sáng hơn
+            if (this.type !== 'pastel-dream') {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, twinkleSize * 0.4, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.7})`;
+                ctx.fill();
+            }
+
+            // Hiệu ứng glitter cho golden-crown
+            if (this.glitter && Math.random() < 0.1) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, twinkleSize * 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.5})`;
+                ctx.fill();
+            }
+        }
+    }
+
+    function createFirework(x, y, fromClick = false) {
+        const minY = canvas.height * 0.15;
+        const maxY = canvas.height * 0.4;
+        const targetY = Math.max(minY, Math.min(maxY, y));
+
+        let startX, startY;
+
+        if (fromClick) {
+            startX = canvas.width / 2;
+            startY = canvas.height - 50;
+        } else {
+            const fromLeft = Math.random() < 0.5;
+            startX = fromLeft ? canvas.width * 0.1 : canvas.width * 0.9;
+            startY = canvas.height - 50;
+        }
+
+        fireworks.push(new Firework(startX, startY, x, fromClick ? y : targetY));
+    }
+
+    function explode(x, y, hue, isGrand = false) {
+        const type = fireworkTypes[Math.floor(Math.random() * fireworkTypes.length)];
+        playExplosionSound(isGrand);
+
+        flash.style.animation = 'flash 0.2s ease-out';
+        setTimeout(() => flash.style.animation = '', 200);
+
+        const multiplier = (isGrand ? 1.5 : 1) * PERFORMANCE_SCALE;
+        let particleCount;
+
+        if (type === 'mega-burst') {
+            particleCount = Math.floor(80 * multiplier);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, hue, type, 0));
+            }
+            setTimeout(() => {
+                for (let i = 0; i < Math.floor(40 * multiplier); i++) {
+                    particles.push(new Particle(x, y, hue + 60, type, 1));
+                }
+            }, 400);
+        } else if (type === 'chrysanthemum') {
+            particleCount = Math.floor(100 * multiplier);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, hue, type));
+            }
+        } else if (type === 'peony') {
+            particleCount = Math.floor(80 * multiplier);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, hue, type));
+            }
+        } else if (type === 'willow-king') {
+            particleCount = Math.floor(90 * multiplier);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, hue, type));
+            }
+        } else if (type === 'crossette') {
+            particleCount = Math.floor(50 * multiplier);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, hue, type));
+            }
+        } else {
+            // Các kiểu đa sắc mới
+            particleCount = Math.floor(90 * multiplier);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, hue, type));
+            }
+        }
+    }
+
+    function grandFinale() {
+        countdown.textContent = '3';
+        countdown.style.opacity = '1';
+        countdown.style.animation = 'countdownPulse 1s ease-out';
+
+        setTimeout(() => {
+            countdown.style.animation = '';
+            countdown.style.opacity = '0';
+        }, 1000);
+
+        setTimeout(() => {
+            countdown.textContent = '2';
+            countdown.style.opacity = '1';
+            countdown.style.animation = 'countdownPulse 1s ease-out';
+
+            setTimeout(() => {
+                countdown.style.animation = '';
+                countdown.style.opacity = '0';
+            }, 1000);
+        }, 1000);
+
+        setTimeout(() => {
+            countdown.textContent = '1';
+            countdown.style.opacity = '1';
+            countdown.style.animation = 'countdownPulse 1s ease-out';
+
+            setTimeout(() => {
+                countdown.style.animation = '';
+                countdown.style.opacity = '0';
+            }, 1000);
+        }, 2000);
+
+        setTimeout(() => {
+            countdown.textContent = '🎆';
+            countdown.style.opacity = '1';
+            countdown.style.animation = 'countdownPulse 1s ease-out';
+
+            setTimeout(() => {
+                countdown.style.opacity = '0';
+            }, 1000);
+
+            // Phase 1: Pháo dạng sóng - từ trái sang phải
+            const wave1Count = isMobile ? 8 : 12;
+            for (let i = 0; i < wave1Count; i++) {
+                setTimeout(() => {
+                    const x = canvas.width * 0.1 + (canvas.width * 0.8 / (wave1Count - 1)) * i;
+                    const y = canvas.height * 0.2 + Math.sin(i / 2) * canvas.height * 0.08;
+                    createFirework(x, y);
+                }, i * 120);
+            }
+
+            // Phase 2: Pháo giữa màn hình - 3 quả to
+            setTimeout(() => {
+                const positions = [
+                    { x: canvas.width * 0.3, y: canvas.height * 0.25 },
+                    { x: canvas.width * 0.5, y: canvas.height * 0.18 },
+                    { x: canvas.width * 0.7, y: canvas.height * 0.25 }
+                ];
+
+                positions.forEach((pos, i) => {
+                    setTimeout(() => createFirework(pos.x, pos.y), i * 300);
+                });
+            }, 1800);
+
+            // Phase 3: Pháo vòng tròn - xung quanh trung tâm
+            setTimeout(() => {
+                const circleCount = isMobile ? 6 : 8;
+                const centerX = canvas.width * 0.5;
+                const centerY = canvas.height * 0.25;
+                const radius = canvas.width * 0.15;
+
+                for (let i = 0; i < circleCount; i++) {
+                    setTimeout(() => {
+                        const angle = (i / circleCount) * Math.PI * 2;
+                        const x = centerX + Math.cos(angle) * radius;
+                        const y = centerY + Math.sin(angle) * radius * 0.5; // Ellipse
+                        createFirework(x, y);
+                    }, i * 80);
+                }
+            }, 3200);
+
+            // Phase 4: Đợt chùm cuối - nổ đồng loạt nhưng cách nhau
+            setTimeout(() => {
+                const finalBurstCount = isMobile ? 9 : 12;
+                const grid = Math.ceil(Math.sqrt(finalBurstCount)); // Tạo lưới
+
+                for (let i = 0; i < finalBurstCount; i++) {
+                    const row = Math.floor(i / grid);
+                    const col = i % grid;
+
+                    setTimeout(() => {
+                        // Phân bố theo lưới nhưng có biến thiên ngẫu nhiên
+                        const x = canvas.width * 0.15 + (canvas.width * 0.7 / (grid - 1)) * col + (Math.random() - 0.5) * 50;
+                        const y = canvas.height * 0.15 + (canvas.height * 0.15 / (grid - 1)) * row + (Math.random() - 0.5) * 30;
+
+                        const startX = canvas.width / 2;
+                        const startY = canvas.height - 50;
+
+                        const fw = new Firework(startX, startY, x, y);
+                        fw.x = x;
+                        fw.y = y;
+                        explode(x, y, Math.random() * 360, true);
+                    }, i * 50); // Nổ nhanh hơn một chút
+                }
+            }, 4500);
+        }, 3000);
+    }
+
+    function animate() {
+        ctx.fillStyle = 'rgba(9, 10, 15, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = fireworks.length - 1; i >= 0; i--) {
+            const fw = fireworks[i];
+            if (fw.update()) {
+                explode(fw.x, fw.y, fw.hue);
+                fireworks.splice(i, 1);
+            } else {
+                fw.draw();
+            }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            const result = p.update();
+            if (result === 'split') {
+                const miniCount = isMobile ? 5 : 10;
+                for (let j = 0; j < miniCount; j++) {
+                    const mini = new Particle(p.x, p.y, p.hue + 30, 'mega-burst');
+                    mini.speed *= 0.5;
+                    mini.vx = Math.cos(Math.random() * Math.PI * 2) * mini.speed;
+                    mini.vy = Math.sin(Math.random() * Math.PI * 2) * mini.speed;
+                    particles.push(mini);
+                }
+                particles.splice(i, 1);
+            } else if (!result) {
+                particles.splice(i, 1);
+            } else {
+                p.draw();
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // Xử lý touch events
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.touches.length; i++) {
+            const touch = e.touches[i];
+            const clickEffect = document.createElement('div');
+            clickEffect.className = 'click-effect';
+            clickEffect.style.left = touch.clientX + 'px';
+            clickEffect.style.top = touch.clientY + 'px';
+            document.body.appendChild(clickEffect);
+            setTimeout(() => clickEffect.remove(), 600);
+
+            createFirework(touch.clientX, touch.clientY, true);
+        }
+    });
+
+    // Xử lý click events
+    canvas.addEventListener('click', (e) => {
+        const clickEffect = document.createElement('div');
+        clickEffect.className = 'click-effect';
+        clickEffect.style.left = e.clientX + 'px';
+        clickEffect.style.top = e.clientY + 'px';
+        document.body.appendChild(clickEffect);
+        setTimeout(() => clickEffect.remove(), 600);
+
+        createFirework(e.clientX, e.clientY, true);
+    });
+
+    // Pháo hoa tự động
+    setInterval(() => {
+        const x = Math.random() * canvas.width * 0.6 + canvas.width * 0.2;
+        const y = canvas.height * 0.2 + Math.random() * canvas.height * 0.15;
+        createFirework(x, y);
+    }, AUTO_FIREWORK_INTERVAL);
+
+    // Xử lý resize
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    // Pháo hoa khởi động
+    setTimeout(() => createFirework(canvas.width * 0.35, canvas.height * 0.25), 500);
+    setTimeout(() => createFirework(canvas.width * 0.65, canvas.height * 0.22), 1000);
+    setTimeout(() => createFirework(canvas.width * 0.5, canvas.height * 0.27), 1500);
+
+    // Grand finale sau 10 giây
+    setTimeout(grandFinale, 10000);
+
+    animate();
+</script>
 </body>
 </html>
